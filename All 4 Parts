@@ -1,0 +1,225 @@
+===================Part 1 : Minikube Cluster on Ubuntu VM and ArgoCD Installation.=================
+
+
+
+
+root@ip-172-31-18-75:/home/ubuntu# date
+Fri Jan 19 18:55:51 UTC 2024
+root@ip-172-31-18-75:/home/ubuntu# kubectl cluster-info
+Kubernetes control plane is running at https://192.168.49.2:8443
+CoreDNS is running at https://192.168.49.2:8443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+root@ip-172-31-18-75:/home/ubuntu# 
+
+
+root@ip-172-31-18-75:/home/ubuntu# date
+Fri Jan 12 19:07:52 UTC 2024
+root@ip-172-31-18-75:/home/ubuntu# kubectl get po -n argocd
+NAME                                               READY   STATUS    RESTARTS   AGE
+argocd-application-controller-0                    1/1     Running   0          6m50s
+argocd-applicationset-controller-5f975ff5-42tqh    1/1     Running   0          6m51s
+argocd-dex-server-7bb445db59-q8x9l                 1/1     Running   0          6m51s
+argocd-notifications-controller-566465df76-ksrlh   1/1     Running   0          6m51s
+argocd-redis-6976fc7dfc-jrn6c                      1/1     Running   0          6m51s
+argocd-repo-server-6d8d59bbc7-sznkd                1/1     Running   0          6m51s
+argocd-server-58f5668765-txmcv                     1/1     Running   0          6m50s
+root@ip-172-31-18-75:/home/ubuntu# 
+
+
+root@ip-172-31-18-75:/home/ubuntu# date
+Fri Jan 12 19:23:27 UTC 2024
+root@ip-172-31-18-75:/home/ubuntu# kubectl get svc -n argocd
+NAME                                      TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE
+argocd-applicationset-controller          ClusterIP   10.110.47.148   <none>        7000/TCP,8080/TCP            22m
+argocd-dex-server                         ClusterIP   10.110.225.6    <none>        5556/TCP,5557/TCP,5558/TCP   22m
+argocd-metrics                            ClusterIP   10.107.37.126   <none>        8082/TCP                     22m
+argocd-notifications-controller-metrics   ClusterIP   10.98.116.52    <none>        9001/TCP                     22m
+argocd-redis                              ClusterIP   10.111.78.230   <none>        6379/TCP                     22m
+argocd-repo-server                        ClusterIP   10.96.14.45     <none>        8081/TCP,8084/TCP            22m
+argocd-server                             ClusterIP   10.102.44.236   <none>        80/TCP,443/TCP               22m
+argocd-server-metrics                     ClusterIP   10.100.82.146   <none>        8083/TCP                     22m
+root@ip-172-31-18-75:/home/ubuntu# 
+
+
+root@ip-172-31-18-75:/home/ubuntu# kubectl edit svc argocd-server -n argocd # changed from ClusterIP to NodePort 
+service/argocd-server edited
+
+
+
+root@ip-172-31-18-75:/home/ubuntu# minikube service list -n argocd
+|-----------|-----------------------------------------|--------------|---------------------------|
+| NAMESPACE |                  NAME                   | TARGET PORT  |            URL            |
+|-----------|-----------------------------------------|--------------|---------------------------|
+| argocd    | argocd-applicationset-controller        | No node port |                           |
+| argocd    | argocd-dex-server                       | No node port |                           |
+| argocd    | argocd-metrics                          | No node port |                           |
+| argocd    | argocd-notifications-controller-metrics | No node port |                           |
+| argocd    | argocd-redis                            | No node port |                           |
+| argocd    | argocd-repo-server                      | No node port |                           |
+| argocd    | argocd-server                           | http/80      | http://192.168.49.2:32110 |
+|           |                                         | https/443    | http://192.168.49.2:30309 |
+| argocd    | argocd-server-metrics                   | No node port |                           |
+|-----------|-----------------------------------------|--------------|---------------------------|
+root@ip-172-31-18-75:/home/ubuntu# 
+
+
+
+
+
+root@ip-172-31-18-75:/home/ubuntu# minikube service argocd-server -n argocd 
+|-----------|---------------|-------------|---------------------------|
+| NAMESPACE |     NAME      | TARGET PORT |            URL            |
+|-----------|---------------|-------------|---------------------------|
+| argocd    | argocd-server | http/80     | http://192.168.49.2:32110 |
+|           |               | https/443   | http://192.168.49.2:30309 |
+|-----------|---------------|-------------|---------------------------|
+[argocd argocd-server http/80
+https/443 http://192.168.49.2:32110
+http://192.168.49.2:30309]
+root@ip-172-31-18-75:/home/ubuntu# 
+
+
+
+root@ip-172-31-18-75:/home/ubuntu# kubectl get svc -n argocd
+NAME                                      TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE
+argocd-applicationset-controller          ClusterIP   10.110.47.148   <none>        7000/TCP,8080/TCP            63m
+argocd-dex-server                         ClusterIP   10.110.225.6    <none>        5556/TCP,5557/TCP,5558/TCP   63m
+argocd-metrics                            ClusterIP   10.107.37.126   <none>        8082/TCP                     63m
+argocd-notifications-controller-metrics   ClusterIP   10.98.116.52    <none>        9001/TCP                     63m
+argocd-redis                              ClusterIP   10.111.78.230   <none>        6379/TCP                     63m
+argocd-repo-server                        ClusterIP   10.96.14.45     <none>        8081/TCP,8084/TCP            63m
+argocd-server                             NodePort    10.102.44.236   <none>        80:32110/TCP,443:30309/TCP   63m
+argocd-server-metrics                     ClusterIP   10.100.82.146   <none>        8083/TCP                     63m
+root@ip-172-31-18-75:/home/ubuntu# 
+
+
+My Virtual Machine ID is 18.188.162.122
+ec2-18-188-162-122.us-east-2.compute.amazonaws.com
+
+https://18.188.162.122:30309
+
+http://18.188.162.122:32110
+
+root@ip-172-31-18-75:/home/ubuntu# kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+
+aQAxc5DeuA3GqVfm
+
+
+
+
+
+===========Part 2 : Initial Container Deployment of hello world using Service and Deployment using Imperative commands. =============
+
+
+
+
+date
+Sun Jan 19 22:07:01 UTC 2024
+
+kubectl create deployment hello-world --image=nginx --replicas=5
+deployment.apps/hello-world created
+
+
+kubectl expose deployment hello-world --type=NodePort --port=80service/hello-world exposed
+
+kubectl get po,deploy,svc
+
+NAME                               READY   STATUS    RESTARTS   AGE
+pod/hello-world-5c4fb45576-x6tzw   1/1     Running   0          110s
+pod/hello-world-5c4fb45576-knw7x   1/1     Running   0          110s
+pod/hello-world-5c4fb45576-5tdc6   1/1     Running   0          110s
+pod/hello-world-5c4fb45576-65h4z   1/1     Running   0          110s
+pod/hello-world-5c4fb45576-lpxkf   1/1     Running   0          110s
+
+NAME                          READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/hello-world   5/5     5            5           110s
+
+NAME                  TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)        AGE
+service/hello-world   NodePort    10.43.19.48   <none>        80:32667/TCP   14s
+
+
+
+
+
+
+============Part 3 : GitHub Actions workflow to automate the deployment of the next semantic version of the container==============
+
+
+
+name: Deploy Hello World Container
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and push Docker image
+      run: |
+        docker build -t your-docker-username/hello-world:latest .
+        docker tag your-docker-username/hello-world:latest your-docker-username/hello-world:${{ github.run_number }}
+        docker push your-docker-username/hello-world:latest
+        docker push your-docker-username/hello-world:${{ github.run_number }}
+
+    - name: Update Kubernetes Deployment
+      run: |
+        kubectl set image deployment/hello-world hello-world=your-docker-username/hello-world:${{ github.run_number }}
+
+
+
+
+
+
+=========================Part 4 : ArgoCD Template for Deployment=======================
+
+ArgoCD Installation is done on K8s as seen from above.
+
+Example YAML file for ArgoCD for hello-world 
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hello-world
+  namespace: default
+spec:
+  destination:
+    name: in-cluster
+    namespace: default
+  project: default
+  source:
+    path: .
+    repoURL: https://github.com/your-username/your-repo.git
+    targetRevision: main
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+
+
+kubectl apply -f argocd-app.yaml
+
+
+Now, every time you make changes to your Kubernetes manifests in the Git repository, ArgoCD will automatically sync the changes to the cluster. For example, if you update the version of the "Hello World" container in your deployment.yaml, ArgoCD will detect the change and update the deployment accordingly.
+
+Here's a simplified GitOps workflow:
+
+    Make changes to your Kubernetes manifests in your Git repository.
+    Commit and push the changes.
+    ArgoCD will detect the changes and automatically synchronize the application with the latest state in the Git repository.
+	
